@@ -1,0 +1,21 @@
+name: build-pkcs11js
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest   # x86_64
+    steps:
+      - name: Compilar pkcs11js en la imagen de Lambda Node.js 24
+        run: |
+          mkdir out
+          docker run --rm --entrypoint bash -v "$PWD/out:/out" \
+            public.ecr.aws/lambda/nodejs:24 -c "
+              dnf install -y gcc-c++ make python3 &&
+              mkdir /w && cd /w && npm init -y &&
+              npm install pkcs11js@2.1.7 &&
+              cp node_modules/pkcs11js/build/Release/pkcs11.node /out/ &&
+              ldd /out/pkcs11.node"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkcs11
+          path: out/pkcs11.node
